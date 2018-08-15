@@ -1,34 +1,34 @@
 package server
 
 import (
-    "net"
-    "fmt"
+	"fmt"
+	"net"
 )
 
 type receiver struct {
-    stream chan []byte
+	stream chan []byte
 }
 
 func NewReceiver(c chan []byte) *receiver {
-    return &receiver{stream: c}
+	return &receiver{stream: c}
 }
 
 func (r *receiver) Run(addr *net.UDPAddr) {
-    inputStreamConn, err := net.ListenUDP("udp", addr)
-    CheckError(err)
+	inputStreamConn, err := net.ListenUDP("udp", addr)
+	CheckError(err)
 
-    defer inputStreamConn.Close()
+	defer inputStreamConn.Close()
 
-    buf := make([]byte, 1024)
+	buf := make([]byte, 1024)
 
-    // Read incoming stream
-    for {
-        n, _, err := inputStreamConn.ReadFromUDP(buf)
-        if err != nil {
-            fmt.Println("Error: ", err)
-            continue
-        }
+	// Read incoming stream
+	for {
+		n, _, err := inputStreamConn.ReadFromUDP(buf)
+		if err != nil {
+			fmt.Println("Error: ", err)
+			continue
+		}
 
-        r.stream <- buf[0:n]
-    }
+		r.stream <- buf[0:n]
+	}
 }
