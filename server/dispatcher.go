@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -54,9 +55,21 @@ func (d *dispatcher) Run(outputStreamAddr *net.UDPAddr) {
 
 			msg := string(clientBuf[0:n])
 
-			fmt.Println("< \"", msg, "\" from", cliaddr.String())
+			fmt.Printf("< \"%s\" from %s\n", msg, cliaddr.String())
 
 			if strings.HasPrefix(msg, "CONNECT") {
+				if len(msg) > 7 {
+					altPort, _ := strconv.Atoi(msg[8:])
+					if altPort > 0 {
+						altAddr := &net.UDPAddr{
+							IP:   cliaddr.IP,
+							Port: altPort,
+							Zone: cliaddr.Zone,
+						}
+						cliaddr = altAddr
+					}
+				}
+				fmt.Printf("sub %d\n", cliaddr.Port)
 				d.subscribe <- cliaddr
 				continue
 			}
@@ -87,6 +100,7 @@ func (d *dispatcher) Run(outputStreamAddr *net.UDPAddr) {
 
 		case address := <-d.unsubscribe:
 			if _, ok := d.subscribers[address.String()]; ok {
+				fmt.Println("unsubscribe -", address.String())
 				delete(d.subscribers, address.String())
 				//fmt.Println("-", address.String())
 			}
